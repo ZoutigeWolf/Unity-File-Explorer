@@ -8,12 +8,19 @@ using TMPro;
 
 public class FileExplorer : MonoBehaviour
 {
+    [Header("File List")]
+    [SerializeField] private ScrollRect filesScrollRect;
     [SerializeField] private Transform fileListParent;
     [SerializeField] private GameObject fileRowPrefab;
-
+    [SerializeField] private Slider filesProgressBar;
     [SerializeField] private TMP_InputField dirInput;
     [SerializeField] private Button previousButton;
     [SerializeField] private Button nextButton;
+
+    [Header("Drive List")]
+    [SerializeField] private ScrollRect drivesScrollRect;
+    [SerializeField] private Transform driveListParent;
+    [SerializeField] private GameObject driveRowPrefab;
 
     [field: SerializeField] public string CurrentPath { get; private set; }
 
@@ -25,21 +32,32 @@ public class FileExplorer : MonoBehaviour
     public Sprite folderIcon;
     public Sprite unknownIcon;
 
+    [SerializeField] private float _loadingProgress = 0f;
+
+    private void Start()
+    {
+        filesProgressBar.gameObject.SetActive(false);
+
+        LoadDrives();
+    }
+
     private void Update()
     {
         previousButton.interactable = currentHistoryIndex > 0;
         nextButton.interactable = currentHistoryIndex < history.Count - 1;
+
+        filesProgressBar.value = _loadingProgress;
     }
 
-    private void LoadDirectory(string dir)
+    private IEnumerator LoadDirectory(string dir)
     {
         if (!Directory.Exists(dir))
         {
             dirInput.text = CurrentPath;
-            return;
+            yield break;
         }
 
-        foreach (Transform row in fileListParent.transform)
+        foreach (Transform row in fileListParent)
         {
             Destroy(row.gameObject);
         }
@@ -48,6 +66,13 @@ public class FileExplorer : MonoBehaviour
 
         files.AddRange(Directory.GetDirectories(dir));
         files.AddRange(Directory.GetFiles(dir));
+
+        filesScrollRect.verticalScrollbar.value = 0f;
+
+        filesProgressBar.gameObject.SetActive(true);
+
+        _loadingProgress = 0f;
+        int loadedFiles = 0;
 
         foreach (string file in files)
         {
@@ -63,10 +88,37 @@ public class FileExplorer : MonoBehaviour
             fileRow.Path = file;
             fileRow.lastModified = fileInfo.LastWriteTime;
             fileRow.IsFolder = Directory.Exists(file);
+
+            loadedFiles++;
+
+            _loadingProgress = ((float)loadedFiles / files.Count);
+
+            yield return null;
         }
 
         CurrentPath = dir;
         dirInput.text = CurrentPath;
+
+        filesProgressBar.gameObject.SetActive(false);
+    }
+
+    private void LoadDrives()
+    {
+        foreach (Transform row in driveListParent)
+        {
+            Destroy(row.gameObject);
+        }
+
+        DriveInfo[] drives = DriveInfo.GetDrives();
+
+        foreach(DriveInfo drive in drives)
+        {
+            DriveRow driveRow = Instantiate(driveRowPrefab, driveListParent).GetComponent<DriveRow>();
+            driveRow.connectedExplorer = this;
+            driveRow.Info = drive;
+        }
+
+        drivesScrollRect.verticalScrollbar.value = 0f;
     }
 
     public void LoadFolder(string folder)
@@ -76,7 +128,9 @@ public class FileExplorer : MonoBehaviour
             history.RemoveRange(currentHistoryIndex + 1, history.Count - (currentHistoryIndex + 1));
         }
 
-        LoadDirectory(folder);
+        StopAllCoroutines();
+        StartCoroutine(LoadDirectory(folder));
+
         history.Add(folder);
         currentHistoryIndex = history.Count == 1 ? 0 : currentHistoryIndex + 1;
     }
@@ -87,7 +141,8 @@ public class FileExplorer : MonoBehaviour
             return;
 
         currentHistoryIndex--;
-        LoadDirectory(history[currentHistoryIndex]);
+        StopAllCoroutines();
+        StartCoroutine(LoadDirectory(history[currentHistoryIndex]));
     }
 
     public void NextDir()
@@ -96,12 +151,16 @@ public class FileExplorer : MonoBehaviour
             return;
 
         currentHistoryIndex++;
-        LoadDirectory(history[currentHistoryIndex]);
+        StopAllCoroutines();
+        StartCoroutine(LoadDirectory(history[currentHistoryIndex]));
     }
 
     public void RefreshDirectory()
     {
-        LoadDirectory(CurrentPath);
+        LoadDrives();
+
+        StopAllCoroutines();
+        StartCoroutine(LoadDirectory(CurrentPath));
     }
 
     private Sprite GetFileIcon(string file)
@@ -109,7 +168,16 @@ public class FileExplorer : MonoBehaviour
         if (Directory.Exists(file))
             return folderIcon;
 
-        string extension = Path.GetExtension(file).Substring(1);
+        string extension;
+
+        try
+        {
+            extension = Path.GetExtension(file).Substring(1);
+        }
+        catch
+        {
+            return unknownIcon;
+        }
 
         foreach (FileIcon fileIcon in FileIcons)
         {

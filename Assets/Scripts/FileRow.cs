@@ -18,23 +18,22 @@ public class FileRow : MonoBehaviour
 
     [Space]
 
-    public Image fileIconImage;
-    public TextMeshProUGUI fileNameText;
-    public TextMeshProUGUI lastModifiedText;
+    [SerializeField] private Image fileIconImage;
+    [SerializeField] private TextMeshProUGUI fileNameText;
+    [SerializeField] private TextMeshProUGUI lastModifiedText;
     
-
     private float _doubleClickTime = 0f;
-
-    private void Update()
-    {
-        _doubleClickTime = _doubleClickTime <= 0f ? 0f : _doubleClickTime - Time.deltaTime; 
-    }
 
     private void Start()
     {
         fileIconImage.sprite = fileIcon;
         fileNameText.text = FileName;
         lastModifiedText.text = lastModified.ToString("dd-M-yyyy H:mm");
+    }
+
+    private void Update()
+    {
+        _doubleClickTime = _doubleClickTime <= 0f ? 0f : _doubleClickTime - Time.deltaTime; 
     }
 
     public void OnClick()
