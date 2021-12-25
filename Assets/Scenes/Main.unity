@@ -2105,7 +2105,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: aa7d3565eb07ba541a4b4c5ff4927a5a, type: 2}
   folderIcon: {fileID: 21300000, guid: dfae1f08b7c7e674c84735adea48ee08, type: 3}
   unknownIcon: {fileID: 21300000, guid: 64bfeedf789ba6c4bad20b4d7136afd5, type: 3}
-  _loadingProgress: 0
+  filesPerFrame: 50
 --- !u!1 &1335659070
 GameObject:
   m_ObjectHideFlags: 0

@@ -32,7 +32,9 @@ public class FileExplorer : MonoBehaviour
     public Sprite folderIcon;
     public Sprite unknownIcon;
 
-    [SerializeField] private float _loadingProgress = 0f;
+    [Range(1, 500)] public int filesPerFrame = 5;
+
+    private float _loadingProgress = 0f;
 
     private void Start()
     {
@@ -93,7 +95,8 @@ public class FileExplorer : MonoBehaviour
 
             _loadingProgress = ((float)loadedFiles / files.Count);
 
-            yield return null;
+            if (loadedFiles % filesPerFrame == 0)
+                yield return null;
         }
 
         CurrentPath = dir;
