@@ -76,6 +76,9 @@ public class FileExplorer : MonoBehaviour
         _loadingProgress = 0f;
         int loadedFiles = 0;
 
+        CurrentPath = dir;
+        dirInput.text = CurrentPath;
+
         foreach (string file in files)
         {
             FileInfo fileInfo = new FileInfo(file);
@@ -98,9 +101,6 @@ public class FileExplorer : MonoBehaviour
             if (loadedFiles % filesPerFrame == 0)
                 yield return null;
         }
-
-        CurrentPath = dir;
-        dirInput.text = CurrentPath;
 
         filesProgressBar.gameObject.SetActive(false);
     }
@@ -191,5 +191,43 @@ public class FileExplorer : MonoBehaviour
         }
 
         return unknownIcon;
+    }
+
+    public void DuplicateFile(string filePath)
+    {
+        string dir = Path.GetDirectoryName(filePath);
+        string fileName = Path.GetFileNameWithoutExtension(filePath) + " - Copy";
+        string ext = Path.GetExtension(filePath);
+
+        string targetPath = dir + fileName + ext;
+
+        try
+        {
+            File.Copy(filePath, targetPath, true);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+        }
+
+        RefreshDirectory();
+    }
+
+    public bool DeleteFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+            return false;
+
+        try
+        {
+            File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogException(ex);
+            return false;
+        }
+
+        return true;
     }
 }

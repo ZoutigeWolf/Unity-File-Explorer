@@ -60,4 +60,15 @@ public class FileRow : MonoBehaviour
             Application.OpenURL(Path);
         }
     }
+
+    public void Duplicate()
+    {
+        connectedExplorer.DuplicateFile(Path);
+    }
+
+    public void Delete()
+    {
+        if (connectedExplorer.DeleteFile(Path))
+            Destroy(gameObject);
+    }
 }
